@@ -38,9 +38,9 @@ const verifyJWT = (req, res, next) => {
     console.log('inside authorization token', token);
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
         if(error){
-            return res.status(403).send({error: true, message: 'Unauthorized Access'});
+            return res.status(401).send({error: true, message: 'Unauthorized Access'});
         }
-        res.decoded = decoded;
+        req.decoded = decoded;
         next();
     })
 }
@@ -56,9 +56,7 @@ async function run() {
         // JWT
         app.post('/jwt', (req, res) => {
             const user = req.body;
-            // console.log(user)
-            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
-            // console.log(token);
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10h' })
             res.send({ token });
         })
 
@@ -75,7 +73,6 @@ async function run() {
             const query = { _id: new ObjectId(id) };
 
             const options = {
-                // Include only the `title` and `price` fields in the returned document
                 projection: { title: 1, price: 1, service_id: 1, img: 1 },
             };
 
@@ -84,8 +81,13 @@ async function run() {
         })
         // Client site Bookings service Load the server site
         app.get('/bookings', verifyJWT, async (req, res) => {
-            // console.log(req.headers.authorization)
-            console.log('came back verify token');
+            const decoded = req.decoded;
+            console.log('came back verify token', decoded);
+
+            if(decoded.email !== req.query.email){
+                return res.status(403).send({ error: true, message: 'forbidden Access' })
+            }
+
             let query = {};
             if (req.query?.email) {
                 const query = { email: req.query.email }
