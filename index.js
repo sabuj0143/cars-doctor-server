@@ -37,8 +37,8 @@ const verifyJWT = (req, res, next) => {
     const token = authorization.split(' ')[1];
     console.log('inside authorization token', token);
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
-        if(error){
-            return res.status(401).send({error: true, message: 'Unauthorized Access'});
+        if (error) {
+            return res.status(401).send({ error: true, message: 'Unauthorized Access' });
         }
         req.decoded = decoded;
         next();
@@ -48,7 +48,7 @@ const verifyJWT = (req, res, next) => {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        client.connect();
 
         const serviceCollection = client.db('carDoctor').collection('services');
         const bookingCollection = client.db('carDoctor').collection('bookings');
@@ -63,7 +63,11 @@ async function run() {
 
         // All Data Load..
         app.get('/services', async (req, res) => {
-            const cursor = serviceCollection.find();
+            const query = {};
+            const options = {
+                sort:{"price": -1}
+            };
+            const cursor = serviceCollection.find(query, options);
             const result = await cursor.toArray();
             res.send(result);
         })
@@ -84,7 +88,7 @@ async function run() {
             const decoded = req.decoded;
             console.log('came back verify token', decoded);
 
-            if(decoded.email !== req.query.email){
+            if (decoded.email !== req.query.email) {
                 return res.status(403).send({ error: true, message: 'forbidden Access' })
             }
 
